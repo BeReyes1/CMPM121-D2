@@ -22,6 +22,7 @@ interface Point {
 type Line = Point[];
 
 let lines: Line[] = [];
+const redoLines: Line[] = [];
 let currentLine: Line = [];
 
 canvas.addEventListener("mousedown", (event) => {
@@ -73,5 +74,27 @@ document.body.appendChild(clearButton);
 clearButton.addEventListener("mousedown", () => {
   lines = [];
   currentLine = [];
+  canvas.dispatchEvent(new Event("drawing-changed"));
+});
+
+const undoButton = document.createElement("button");
+undoButton.textContent = "Undo";
+document.body.appendChild(undoButton);
+
+undoButton.addEventListener("mousedown", () => {
+  if (lines.length == 0) return;
+  redoLines.push(lines.pop()!);
+
+  canvas.dispatchEvent(new Event("drawing-changed"));
+});
+
+const redoButton = document.createElement("button");
+redoButton.textContent = "Redo";
+document.body.appendChild(redoButton);
+
+redoButton.addEventListener("mousedown", () => {
+  if (redoLines.length == 0) return;
+
+  lines.push(redoLines.pop()!);
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
