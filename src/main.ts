@@ -15,27 +15,55 @@ document.body.appendChild(canvas);
 const cursor = { active: false, x: 0, y: 0 };
 const ctx = canvas.getContext("2d");
 
+interface Point {
+  x: number;
+  y: number;
+}
+type Line = Point[];
+
+let lines: Line[] = [];
+let currentLine: Line = [];
+
 canvas.addEventListener("mousedown", (event) => {
   cursor.active = true;
   cursor.x = event.offsetX;
   cursor.y = event.offsetY;
+
+  currentLine.push({ x: cursor.x, y: cursor.y });
+  lines.push(currentLine);
+
+  canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
 canvas.addEventListener("mouseup", () => {
   cursor.active = false;
+  currentLine = [];
 });
 
 canvas.addEventListener("mousemove", (event) => {
-  if (!cursor.active) {
-    return;
-  }
+  if (!cursor.active) return;
 
-  ctx?.beginPath();
-  ctx?.moveTo(cursor.x, cursor.y);
-  ctx?.lineTo(event.offsetX, event.offsetY);
-  ctx?.stroke();
-  cursor.x = event.offsetX;
-  cursor.y = event.offsetY;
+  currentLine.push({ x: event.offsetX, y: event.offsetY });
+  canvas.dispatchEvent(new Event("drawing-changed"));
+});
+
+canvas.addEventListener("drawing-changed", () => {
+  if (!ctx) return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (const line of lines) {
+    if (line.length > 1) {
+      ctx.beginPath();
+      const start = line[0];
+      if (start == null) continue;
+      ctx.moveTo(start.x, start.y);
+      for (const { x, y } of line) {
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  }
 });
 
 const clearButton = document.createElement("button");
@@ -43,5 +71,7 @@ clearButton.textContent = "Clear";
 document.body.appendChild(clearButton);
 
 clearButton.addEventListener("mousedown", () => {
-  ctx?.clearRect(0, 0, canvas.width, canvas.height);
+  lines = [];
+  currentLine = [];
+  canvas.dispatchEvent(new Event("drawing-changed"));
 });
