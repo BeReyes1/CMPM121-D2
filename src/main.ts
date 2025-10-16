@@ -19,18 +19,42 @@ interface Point {
   x: number;
   y: number;
 }
-type Line = Point[];
 
-let lines: Line[] = [];
-const redoLines: Line[] = [];
-let currentLine: Line = [];
+interface Draw {
+  display(ctx: CanvasRenderingContext2D): void;
+  drag(x: number, y: number): void;
+}
+
+function createDrawingLine(startX: number, startY: number): Draw {
+  const points: Point[] = [{ x: startX, y: startY }];
+
+  function drag(x: number, y: number) {
+    points.push({ x, y });
+  }
+
+  function display(ctx: CanvasRenderingContext2D) {
+    if (points.length < 2) return;
+    ctx.beginPath();
+    const start = points[0];
+    if (start == null) return;
+    ctx.moveTo(start.x, start.y);
+    for (const p of points) ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+
+  return { drag, display };
+}
+
+let lines: Draw[] = [];
+const redoLines: Draw[] = [];
+let currentLine: Draw | null = null;
 
 canvas.addEventListener("mousedown", (event) => {
   cursor.active = true;
   cursor.x = event.offsetX;
   cursor.y = event.offsetY;
 
-  currentLine.push({ x: cursor.x, y: cursor.y });
+  currentLine = createDrawingLine(cursor.x, cursor.y);
   lines.push(currentLine);
 
   canvas.dispatchEvent(new Event("drawing-changed"));
@@ -38,13 +62,13 @@ canvas.addEventListener("mousedown", (event) => {
 
 canvas.addEventListener("mouseup", () => {
   cursor.active = false;
-  currentLine = [];
+  currentLine = null;
 });
 
 canvas.addEventListener("mousemove", (event) => {
-  if (!cursor.active) return;
+  if (!cursor.active || currentLine == null) return;
 
-  currentLine.push({ x: event.offsetX, y: event.offsetY });
+  currentLine.drag(event.offsetX, event.offsetY);
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
@@ -52,19 +76,7 @@ canvas.addEventListener("drawing-changed", () => {
   if (!ctx) return;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  for (const line of lines) {
-    if (line.length > 1) {
-      ctx.beginPath();
-      const start = line[0];
-      if (start == null) continue;
-      ctx.moveTo(start.x, start.y);
-      for (const { x, y } of line) {
-        ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
-  }
+  for (const line of lines) line.display(ctx);
 });
 
 const clearButton = document.createElement("button");
@@ -73,7 +85,7 @@ document.body.appendChild(clearButton);
 
 clearButton.addEventListener("mousedown", () => {
   lines = [];
-  currentLine = [];
+  currentLine = null;
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
