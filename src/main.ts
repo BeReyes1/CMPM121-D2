@@ -25,7 +25,11 @@ interface Draw {
   drag(x: number, y: number): void;
 }
 
-function createDrawingLine(startX: number, startY: number): Draw {
+function createDrawingLine(
+  startX: number,
+  startY: number,
+  thickness: number,
+): Draw {
   const points: Point[] = [{ x: startX, y: startY }];
 
   function drag(x: number, y: number) {
@@ -37,6 +41,7 @@ function createDrawingLine(startX: number, startY: number): Draw {
     ctx.beginPath();
     const start = points[0];
     if (start == null) return;
+    ctx.lineWidth = thickness;
     ctx.moveTo(start.x, start.y);
     for (const p of points) ctx.lineTo(p.x, p.y);
     ctx.stroke();
@@ -48,13 +53,14 @@ function createDrawingLine(startX: number, startY: number): Draw {
 let lines: Draw[] = [];
 const redoLines: Draw[] = [];
 let currentLine: Draw | null = null;
+let currentThickness = 2;
 
 canvas.addEventListener("mousedown", (event) => {
   cursor.active = true;
   cursor.x = event.offsetX;
   cursor.y = event.offsetY;
 
-  currentLine = createDrawingLine(cursor.x, cursor.y);
+  currentLine = createDrawingLine(cursor.x, cursor.y, currentThickness);
   lines.push(currentLine);
 
   canvas.dispatchEvent(new Event("drawing-changed"));
@@ -79,34 +85,40 @@ canvas.addEventListener("drawing-changed", () => {
   for (const line of lines) line.display(ctx);
 });
 
-const clearButton = document.createElement("button");
-clearButton.textContent = "Clear";
-document.body.appendChild(clearButton);
+const buttonContainer = document.createElement("div");
+document.body.appendChild(buttonContainer);
 
-clearButton.addEventListener("mousedown", () => {
+const makeButton = (name: string, OnClick: () => void): HTMLButtonElement => {
+  const button = document.createElement("button");
+  button.textContent = name;
+  button.addEventListener("click", OnClick);
+  buttonContainer.appendChild(button);
+  return button;
+};
+
+makeButton("Clear", () => {
   lines = [];
   currentLine = null;
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
-const undoButton = document.createElement("button");
-undoButton.textContent = "Undo";
-document.body.appendChild(undoButton);
-
-undoButton.addEventListener("mousedown", () => {
+makeButton("Undo", () => {
   if (lines.length == 0) return;
   redoLines.push(lines.pop()!);
 
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
-const redoButton = document.createElement("button");
-redoButton.textContent = "Redo";
-document.body.appendChild(redoButton);
-
-redoButton.addEventListener("mousedown", () => {
+makeButton("Redo", () => {
   if (redoLines.length == 0) return;
 
   lines.push(redoLines.pop()!);
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
+
+function selectTool(thickness: number) {
+  currentThickness = thickness;
+}
+
+makeButton("Thin", () => selectTool(2));
+makeButton("Thick", () => selectTool(8));
