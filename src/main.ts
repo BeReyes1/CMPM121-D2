@@ -105,7 +105,7 @@ let currentThickness = 1;
 let preview: Draw | null = null;
 let currentTool: "Default" | "Custom" = "Default";
 let currentSticker = "*";
-const stickers: string[] = ["🦆", "🗑️", "🤡", "🌹", "📾"];
+const stickers: string[] = ["🦆", "🗑️", "🤡", "🌹", "📾", "🎸"];
 
 canvas.addEventListener("mousedown", (event) => {
   cursor.active = true;
