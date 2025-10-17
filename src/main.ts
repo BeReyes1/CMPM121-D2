@@ -176,6 +176,27 @@ const makeButton = (name: string, OnClick: () => void): HTMLButtonElement => {
   return button;
 };
 
+makeButton("Export", () => {
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = 1024;
+  exportCanvas.height = 1024;
+  const exportCtx = exportCanvas.getContext("2d");
+
+  if (!exportCtx) return;
+
+  const scaleFactor = exportCanvas.width / canvas.width;
+  exportCtx.scale(scaleFactor, scaleFactor);
+
+  for (const line of lines) {
+    line.display(exportCtx);
+  }
+
+  const anchor = document.createElement("a");
+  anchor.href = exportCanvas.toDataURL("image/png");
+  anchor.download = "sketchpad.png";
+  anchor.click();
+});
+
 makeButton("Clear", () => {
   lines = [];
   currentLine = null;
