@@ -60,7 +60,7 @@ function createSticker(startX: number, startY: number, emoji: string): Draw {
   }
 
   function display(ctx: CanvasRenderingContext2D) {
-    ctx.font = "32px monospace";
+    ctx.font = "24px monospace";
     ctx.fillText(emoji, pos.x - 16, pos.y + 16);
   }
 
@@ -75,7 +75,7 @@ function createPreview(startX: number, startY: number, symbol: string): Draw {
   }
 
   function display(ctx: CanvasRenderingContext2D) {
-    ctx.font = "32px monospace";
+    ctx.font = "24px monospace";
     const p = points[0];
     if (p == null) return;
     ctx.fillText(symbol, p.x - 16, p.y + 16);
@@ -100,12 +100,12 @@ function createStickerButtons() {
 let lines: Draw[] = [];
 const redoLines: Draw[] = [];
 let currentLine: Draw | null = null;
-let currentThickness = 2;
+let currentThickness = 1;
 
 let preview: Draw | null = null;
 let currentTool: "Default" | "Custom" = "Default";
 let currentSticker = "*";
-const stickers: string[] = ["🦆", "🗑️", "🤡"];
+const stickers: string[] = ["🦆", "🗑️", "🤡", "🌹", "📾"];
 
 canvas.addEventListener("mousedown", (event) => {
   cursor.active = true;
@@ -230,8 +230,8 @@ function selectSticker(sticker: string) {
   canvas.dispatchEvent(new Event("tool-moved"));
 }
 
-makeButton("Thin", () => selectTool(2));
-makeButton("Thick", () => selectTool(8));
+makeButton("Thin", () => selectTool(1));
+makeButton("Thick", () => selectTool(10));
 
 createStickerButtons();
 
