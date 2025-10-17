@@ -84,6 +84,19 @@ function createPreview(startX: number, startY: number, symbol: string): Draw {
   return { drag, display };
 }
 
+function createStickerButtons() {
+  const currentStickers = document.querySelectorAll(".sticker-button");
+  currentStickers.forEach((b) => b.remove());
+
+  stickers.forEach((sticker) => {
+    const button = makeButton(sticker, () => {
+      selectSticker(sticker);
+      canvas.dispatchEvent(new Event("tool-moved"));
+    });
+    button.classList.add("sticker-button");
+  });
+}
+
 let lines: Draw[] = [];
 const redoLines: Draw[] = [];
 let currentLine: Draw | null = null;
@@ -92,6 +105,7 @@ let currentThickness = 2;
 let preview: Draw | null = null;
 let currentTool: "Default" | "Custom" = "Default";
 let currentSticker = "*";
+const stickers: string[] = ["🦆", "🗑️", "🤡"];
 
 canvas.addEventListener("mousedown", (event) => {
   cursor.active = true;
@@ -198,12 +212,14 @@ function selectSticker(sticker: string) {
 makeButton("Thin", () => selectTool(2));
 makeButton("Thick", () => selectTool(8));
 
-makeButton("🦆", () => {
-  selectSticker("🦆");
-});
-makeButton("🗑️", () => {
-  selectSticker("🗑️");
-});
-makeButton("🤡", () => {
-  selectSticker("🤡");
+createStickerButtons();
+
+makeButton("➕ Custom Sticker", () => {
+  const text = prompt("Custom sticker text", "🧽");
+  if (text && text.trim() !== "") {
+    stickers.push(text);
+    createStickerButtons();
+    selectSticker(text);
+    canvas.dispatchEvent(new Event("tool-moved"));
+  }
 });
