@@ -52,7 +52,22 @@ function createDrawingLine(
   return { drag, display };
 }
 
-function createPreview(startX: number, startY: number): Draw {
+function createSticker(startX: number, startY: number, emoji: string): Draw {
+  let pos: Point = { x: startX, y: startY };
+
+  function drag(x: number, y: number) {
+    pos = { x, y };
+  }
+
+  function display(ctx: CanvasRenderingContext2D) {
+    ctx.font = "32px monospace";
+    ctx.fillText(emoji, pos.x - 16, pos.y + 16);
+  }
+
+  return { drag, display };
+}
+
+function createPreview(startX: number, startY: number, symbol: string): Draw {
   const points: Point[] = [{ x: startX, y: startY }];
 
   function drag(x: number, y: number) {
@@ -63,7 +78,7 @@ function createPreview(startX: number, startY: number): Draw {
     ctx.font = "32px monospace";
     const p = points[0];
     if (p == null) return;
-    ctx.fillText("*", p.x - 8, p.y + 16);
+    ctx.fillText(symbol, p.x - 16, p.y + 16);
   }
 
   return { drag, display };
@@ -75,13 +90,20 @@ let currentLine: Draw | null = null;
 let currentThickness = 2;
 
 let preview: Draw | null = null;
+let currentTool: "Default" | "Custom" = "Default";
+let currentSticker = "*";
 
 canvas.addEventListener("mousedown", (event) => {
   cursor.active = true;
   cursor.x = event.offsetX;
   cursor.y = event.offsetY;
 
-  currentLine = createDrawingLine(cursor.x, cursor.y, currentThickness);
+  if (currentTool == "Default") {
+    currentLine = createDrawingLine(cursor.x, cursor.y, currentThickness);
+  } else {
+    currentLine = createSticker(cursor.x, cursor.y, currentSticker);
+  }
+
   lines.push(currentLine);
 
   canvas.dispatchEvent(new Event("drawing-changed"));
@@ -94,7 +116,7 @@ canvas.addEventListener("mouseup", () => {
 
 canvas.addEventListener("mousemove", (event) => {
   if (!cursor.active || currentLine == null) {
-    preview = createPreview(event.offsetX, event.offsetY);
+    preview = createPreview(event.offsetX, event.offsetY, currentSticker);
     canvas.dispatchEvent(new Event("tool-moved"));
   } else {
     currentLine.drag(event.offsetX, event.offsetY);
@@ -162,8 +184,26 @@ makeButton("Redo", () => {
 
 function selectTool(thickness: number) {
   currentThickness = thickness;
-  1;
+  currentTool = "Default";
+  currentSticker = "*";
+}
+
+function selectSticker(sticker: string) {
+  currentTool = "Custom";
+  currentSticker = sticker;
+
+  canvas.dispatchEvent(new Event("tool-moved"));
 }
 
 makeButton("Thin", () => selectTool(2));
 makeButton("Thick", () => selectTool(8));
+
+makeButton("🦆", () => {
+  selectSticker("🦆");
+});
+makeButton("🗑️", () => {
+  selectSticker("🗑️");
+});
+makeButton("🤡", () => {
+  selectSticker("🤡");
+});
