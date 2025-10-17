@@ -1,3 +1,3 @@
 # CMPM 121 D2 Project
 
-This is the starting point for your CMPM 121 D2 project. Students should make sure to remove _this_ content from their README.md file and replace it with their own project documentation.
+This program creates a canvas the user can draw on with export functionality. There are basic actions like clear, undo, and redo. They are given two pen options that change colors randomly when selecting them. There are stickers that can be placed with the ability for the user to create their own sticker as well.
