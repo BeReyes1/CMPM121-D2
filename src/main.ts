@@ -12,6 +12,8 @@ canvas.height = 256;
 canvas.className = "canvas";
 document.body.appendChild(canvas);
 
+canvas.style.cursor = "none";
+
 const cursor = { active: false, x: 0, y: 0 };
 const ctx = canvas.getContext("2d");
 
@@ -50,10 +52,29 @@ function createDrawingLine(
   return { drag, display };
 }
 
+function createPreview(startX: number, startY: number): Draw {
+  const points: Point[] = [{ x: startX, y: startY }];
+
+  function drag(x: number, y: number) {
+    points.push({ x, y });
+  }
+
+  function display(ctx: CanvasRenderingContext2D) {
+    ctx.font = "32px monospace";
+    const p = points[0];
+    if (p == null) return;
+    ctx.fillText("*", p.x - 8, p.y + 16);
+  }
+
+  return { drag, display };
+}
+
 let lines: Draw[] = [];
 const redoLines: Draw[] = [];
 let currentLine: Draw | null = null;
 let currentThickness = 2;
+
+let preview: Draw | null = null;
 
 canvas.addEventListener("mousedown", (event) => {
   cursor.active = true;
@@ -72,10 +93,33 @@ canvas.addEventListener("mouseup", () => {
 });
 
 canvas.addEventListener("mousemove", (event) => {
-  if (!cursor.active || currentLine == null) return;
+  if (!cursor.active || currentLine == null) {
+    preview = createPreview(event.offsetX, event.offsetY);
+    canvas.dispatchEvent(new Event("tool-moved"));
+  } else {
+    currentLine.drag(event.offsetX, event.offsetY);
+    canvas.dispatchEvent(new Event("drawing-changed"));
+  }
+});
 
-  currentLine.drag(event.offsetX, event.offsetY);
-  canvas.dispatchEvent(new Event("drawing-changed"));
+canvas.addEventListener("mouseenter", () => {
+  canvas.dispatchEvent(new Event("tool-moved"));
+});
+
+canvas.addEventListener("mouseleave", () => {
+  cursor.active = false;
+  preview = null;
+  canvas.dispatchEvent(new Event("tool-moved"));
+});
+
+canvas.addEventListener("tool-moved", () => {
+  if (!ctx) return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (const line of lines) line.display(ctx);
+  if (preview && !cursor.active) {
+    preview.display(ctx);
+  }
 });
 
 canvas.addEventListener("drawing-changed", () => {
@@ -118,6 +162,7 @@ makeButton("Redo", () => {
 
 function selectTool(thickness: number) {
   currentThickness = thickness;
+  1;
 }
 
 makeButton("Thin", () => selectTool(2));
