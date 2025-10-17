@@ -33,6 +33,7 @@ function createDrawingLine(
   thickness: number,
 ): Draw {
   const points: Point[] = [{ x: startX, y: startY }];
+  const color = currentColor;
 
   function drag(x: number, y: number) {
     points.push({ x, y });
@@ -44,6 +45,7 @@ function createDrawingLine(
     const start = points[0];
     if (start == null) return;
     ctx.lineWidth = thickness;
+    ctx.strokeStyle = color;
     ctx.moveTo(start.x, start.y);
     for (const p of points) ctx.lineTo(p.x, p.y);
     ctx.stroke();
@@ -78,6 +80,7 @@ function createPreview(startX: number, startY: number, symbol: string): Draw {
     ctx.font = "24px monospace";
     const p = points[0];
     if (p == null) return;
+    ctx.fillStyle = currentColor;
     ctx.fillText(symbol, p.x - 16, p.y + 16);
   }
 
@@ -97,6 +100,10 @@ function createStickerButtons() {
   });
 }
 
+function randomizeColor() {
+  currentColor = `hsl(${Math.floor(Math.random() * 360)}, 90%, 50%)`;
+}
+
 let lines: Draw[] = [];
 const redoLines: Draw[] = [];
 let currentLine: Draw | null = null;
@@ -106,6 +113,7 @@ let preview: Draw | null = null;
 let currentTool: "Default" | "Custom" = "Default";
 let currentSticker = "*";
 const stickers: string[] = ["🦆", "🗑️", "🤡", "🌹", "📾", "🎸"];
+let currentColor = "black";
 
 canvas.addEventListener("mousedown", (event) => {
   cursor.active = true;
@@ -221,6 +229,7 @@ function selectTool(thickness: number) {
   currentThickness = thickness;
   currentTool = "Default";
   currentSticker = "*";
+  randomizeColor();
 }
 
 function selectSticker(sticker: string) {
